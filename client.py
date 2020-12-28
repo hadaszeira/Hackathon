@@ -4,6 +4,8 @@ import sys
 
 from pynput.keyboard import Key, Listener
 
+from formats import PrintColors
+
 team_name = b'Marcelo\n'
 sock = None
 
@@ -26,15 +28,15 @@ def udp_recv_offer():
     client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
     # Enable broadcasting mode
     client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    print("Client started, listening for offer requests...")
+    print(PrintColors.OKGREEN + "Client started, listening for offer requests...")
 
     client.bind(("", 13117))
     data, addr = client.recvfrom(1024)  # buffer size is 1024 bytes
     if  data[:4] != bytes([0xfe, 0xed, 0xbe, 0xef]) or data[4] != 0x02:
-        print("illegal format")
+        print(PrintColors.RED + "illegal format")
         return addr, -1
     port = struct.unpack('>H', data[5:7])[0]
-    print("Received offer from %s, attempting to connect..." % addr[0])
+    print(PrintColors.OKGREEN + "Received offer from %s, attempting to connect..." % addr[0])
     client.close()
     return addr, port
 
@@ -53,19 +55,19 @@ def main(argv):
             sock.connect((HOST, PORT))
             sock.sendall(team_name)
             # data = sock.recv(1024)
-            print('client connected successfully, GO TEAM Marcelo!')
+            print(PrintColors.OKGREEN + 'client connected successfully, GO TEAM Marcelo!')
             data = sock.recv(1024)
             welcome_msg = data.decode("utf-8")
-            print(welcome_msg)
+            print(PrintColors.OKCYAN + welcome_msg)
 
             # Collect events until released
             with Listener(on_press=on_press) as listener:
                 # listener.join()
                 data = sock.recv(1024)
                 listener.stop()
-                print("\n" + data.decode("utf-8"))
+                print(PrintColors.purple + "\n\n" + data.decode("utf-8"))
 
-            print("\n=================\n")
+            print(PrintColors.purple + "=================\n")
 
 
 if __name__ == "__main__":

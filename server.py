@@ -35,7 +35,7 @@ def check_team_name(data_out):
 
 def accept_wrapper(sel, sock):
     conn, addr = sock.accept()  # Should be ready to read
-    print('accepted connection from', addr)
+    print(formats.PrintColors.OKGREEN + 'accepted connection from', addr)
     conn.setblocking(False)
     data = types.SimpleNamespace(addr=addr, inb=b'', outb=b'')
     events = selectors.EVENT_READ | selectors.EVENT_WRITE
@@ -94,7 +94,7 @@ def unregi_client(sel, key, mask):
     sock = key.fileobj
     data = key.data
 
-    print('closing connection to', data.addr)
+    print(formats.PrintColors.purple + 'closing connection to', data.addr)
     try:
         sel.unregister(sock)
         sock.close()
@@ -150,17 +150,15 @@ def finish_main_loop():
     group2 = []
 
 
-
-
 def create_welcome_msg():
-    welcome_msg = "Welcome to Keyboard Spamming Battle Royal.\nGroup 1: \n==\n"
+    welcome_msg = "\nWelcome to Keyboard Spamming Battle Royal.\nGroup 1: \n==\n"
     for t in group1:
         welcome_msg += t + '\n'
     welcome_msg += "Group 2: \n==\n"
     for t in group2:
         welcome_msg += t + '\n'
     welcome_msg += "Start pressing keys on your keyboard as fast as you can!!\n"
-    print(welcome_msg)
+    print(formats.PrintColors.OKCYAN + welcome_msg)
     welcome_msg = bytes(welcome_msg, 'utf-8')
     return welcome_msg
 
@@ -168,7 +166,6 @@ def create_welcome_msg():
 def main():
     global score_group1
     global score_group2
-    global my_client_list
 
     main_loop = True
     while main_loop:
@@ -184,7 +181,7 @@ def main():
         lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         lsock.bind((HOST, PORT))
         lsock.listen()
-        print('Server started, listening on IP address ', (HOST, PORT))
+        print(formats.PrintColors.OKGREEN + 'Server started, listening on IP address ', (HOST, PORT))
         lsock.setblocking(False)
         sel.register(lsock, selectors.EVENT_READ, data=None)
 
@@ -224,19 +221,20 @@ def main():
             send_msg_to_clients(sel, key, mask, b"GAME-OVER!\n")
 
         # Stage 6: print game summary
-        print("Game over!\nGroup 1 typed in %d characters. Group 2 typed %d characters." % (score_group1, score_group2))
+        print(formats.PrintColors.OKBLUE +
+              "Game over!\nGroup 1 typed in %d characters. Group 2 typed %d characters." % (score_group1, score_group2))
         if score_group1 > score_group2:
-            print("Group 1 Wins!")
-            print("Congratulations to the winners:\n==")
+            print(formats.PrintColors.OKBLUE + formats.PrintColors.BOLD + "Group 1 Wins!")
+            print(formats.PrintColors.OKBLUE + "Congratulations to the winners:\n==")
             for t in group1:
-                print(t + "\n")
+                print(formats.PrintColors.OKBLUE + t + "\n")
         if score_group1 < score_group2:
-            print("Group 2 Wins!")
-            print("Congratulations to the winners:\n==")
+            print(formats.PrintColors.OKBLUE + formats.PrintColors.BOLD + "Group 2 Wins!")
+            print(formats.PrintColors.OKBLUE + "Congratulations to the winners:\n==")
             for t in group2:
-                print(t + "\n")
+                print(formats.PrintColors.OKBLUE + t + "\n")
         else:
-            print("Unbelievable! It's a tie!")
+            print(formats.PrintColors.OKBLUE + "Unbelievable! It's a tie!")
 
         # Stage 7: unregister all clients
         events = sel.select(timeout=None)
@@ -244,12 +242,12 @@ def main():
             unregi_client(sel, key, mask)
 
         # Stage 8: close socket and loop again
-        print("Game over, sending out offer requests...")
+        print(formats.PrintColors.purple + "Game over, sending out offer requests...")
         finish_main_loop()
         lsock.close()
 
         # time.sleep(2)
-        print("\n=================\n")
+        print(formats.PrintColors.purple + "\n=================\n")
 
 
 if __name__ == "__main__":

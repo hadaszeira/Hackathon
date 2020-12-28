@@ -1,4 +1,22 @@
 
+class PrintColors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    RED = '\u001b[31m'
+    Magenta = '\u001b[35'
+    Yellow = '\u001b[33'
+    purple = '\033[35m'
+    RESET = '\u001b[0m'
+    BackgroundBrightMagenta = '\u001b[45;1m'
+    BackgroundBrightCyan = '\u001b[46;1m'
+
 
 class BrodMSG(object):
     port: bytes
@@ -10,6 +28,7 @@ class BrodMSG(object):
 
     def msg_to_bytes(self):
         return self.magic_cookie + self.type + self.port
+
 
 def bytes_to_msg(msg_in_bytes):
     magic_cookie = msg_in_bytes[:4]
