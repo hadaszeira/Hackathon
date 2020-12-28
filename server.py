@@ -226,16 +226,17 @@ def main():
         # print("Group 1: \n==\n" + str(group1))
         # print("Group 2: \n==\n" + str(group2))
         # print("Start pressing keys on your keyboard as fast as you can!!")
-        # welcome_msg = b"Welcome to Keyboard Spamming Battle Royal.\nGroup 1: \n==\n"
-        # for t in group1:
-        #     welcome_msg += t + '\n'
-        # welcome_msg += "Group 2: \n==\n"
-        # for t in group2:
-            # welcome_msg += t + '\n'
-        # "".join([i[0] for i in group1])
+        welcome_msg = "Welcome to Keyboard Spamming Battle Royal.\nGroup 1: \n==\n"
+        for t in group1:
+            welcome_msg += t + '\n'
+        welcome_msg += "Group 2: \n==\n"
+        for t in group2:
+            welcome_msg += t + '\n'
+        welcome_msg += "Start pressing keys on your keyboard as fast as you can!!\n"
+        print(welcome_msg)
+        welcome_msg = bytes(welcome_msg, 'utf-8')
 
-        # + bytes(str(group1)) + b"\n" + b"Group 2: \n==\n" + bytes(str(group2)) + b"\n" + b"Start pressing keys on your keyboard as fast as you can!!"
-        welcome_msg = b'Welcome msg ~~'
+        # welcome_msg = b'Welcome msg ~~'
 
         events = sel.select(timeout=None)
         for key, mask in events:
@@ -264,6 +265,9 @@ def main():
             unregi_client(sel, key, mask)
         finish_main_loop()
         lsock.close()
+
+        time.sleep(2)
+        print("\n\n---------------\n\n")
 
 
 if __name__ == "__main__":

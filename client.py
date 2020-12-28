@@ -1,6 +1,7 @@
 import socket
 import struct
 import sys
+import time
 
 from pynput.keyboard import Key, Listener
 
@@ -54,15 +55,20 @@ def main(argv):
             sock.connect((HOST, PORT))
             sock.sendall(team_name)
             # data = sock.recv(1024)
-            print('client connected successfully, GO TEAM ', team_name[1: len(team_name) - 1])
+            print('client connected successfully, GO TEAM Marcelo!')
             data = sock.recv(1024)
-            print(repr(data))
+            welcome_msg = data.decode("utf-8")
+            print(welcome_msg)
+
             # Collect events until released
             with Listener(on_press=on_press) as listener:
                 # listener.join()
                 data = sock.recv(1024)
                 listener.stop()
                 print(repr(data))
+
+            time.sleep(2)
+            print("\n\n---------------\n\n")
 
 
 if __name__ == "__main__":
