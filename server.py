@@ -6,7 +6,6 @@ import time
 import types
 import formats
 
-my_client_list = []
 group1 = []
 group2 = []
 score_group1 = 0
@@ -24,13 +23,12 @@ def update_scores(data_outb):
     if team in group2:
         score_group2 += 1
     else:
-        print("team:" + team)
-        print("Error: update scores")
+        print("Error: update scores! ---> team:" + team)
 
 
 def check_team_name(data_out):
     data = repr(data_out)
-    if len(data) > 1:  # and data[len(data) - 2] == '\n':
+    if len(data) > 1:
         return data
     return ""
 
@@ -51,17 +49,15 @@ def service_connection(sel, key, mask):
     if mask & selectors.EVENT_READ:
         recv_data = sock.recv(1024)  # Should be ready to read
         if recv_data:
-            # data.outb += recv_data
             team_name = check_team_name(recv_data)
         else:
             print('closing connection to', data.addr)
-            sel.unregister(sock)
-            sock.close()
-    # if mask & selectors.EVENT_WRITE:
-    #     if data.outb:
-    #         print('echoing', repr(data.outb), 'to', data.addr)
-    #         sent = sock.send(data.outb)  # Should be ready to write
-    #         data.outb = data.outb[sent:]
+            try:
+                sel.unregister(sock)
+                sock.close()
+            except:
+                print("Error: service_connection func")
+                pass
     return team_name
 
 
@@ -73,25 +69,8 @@ def send_msg_to_clients(sel, key, mask, msg):
             sent = sock.send(msg)  # Should be ready to write
             data.outb = data.outb[sent:]
         except:
-            print("Error welcome")
+            print("Error: send_msg_to_clients")
             pass
-    # if mask & selectors.EVENT_READ:
-    #     recv_data = sock.recv(1024)  # Should be ready to read
-    #     if recv_data:
-    #          data.outb += recv_data
-    #     else:
-    #         print('closing connection to', data.addr)
-    #         sel.unregister(sock)
-    #         sock.close()
-    # if mask & selectors.EVENT_WRITE:
-    #      # if data.outb:
-    #          # print('echoing', repr(data.outb), 'to', data.addr)
-    #  try:
-    #     sent = sock.send(msg)  # Should be ready to write
-    #     data.outb = data.outb[sent:]
-    #  except:
-    #     print("Error welcome")
-    #     pass
 
 
 def service_game_begins(sel, key, mask):
@@ -100,16 +79,15 @@ def service_game_begins(sel, key, mask):
     if mask & selectors.EVENT_READ:
         recv_data = sock.recv(1024)  # Should be ready to read
         if recv_data:
-            # data.outb = recv_data
             update_scores(recv_data)
-            # data.outb = data.outb[0:]
         else:
             print('closing connection to', data.addr)
-            sel.unregister(sock)
-            sock.close()
-    # if mask & selectors.EVENT_WRITE:
-    #     sent = sock.send(welcome_msg)
-    #     data.outb = data.outb[sent:]
+            try:
+                sel.unregister(sock)
+                sock.close()
+            except:
+                print("Error: service_game_begins func")
+                pass
 
 
 def unregi_client(sel, key, mask):
@@ -117,19 +95,12 @@ def unregi_client(sel, key, mask):
     data = key.data
 
     print('closing connection to', data.addr)
-    sel.unregister(sock)
-    sock.close()
-    # if mask & selectors.EVENT_READ:
-    #     recv_data = sock.recv(1024)  # Should be ready to read
-    #     if recv_data:
-    #         data.outb = recv_data
-    #     else:
-    #         print('closing connection to', data.addr)
-    #         sel.unregister(sock)
-    #         sock.close()
-    # if mask & selectors.EVENT_WRITE:
-    #     sent = sock.send(bye_msg)
-    #     data.outb = data.outb[sent:]
+    try:
+        sel.unregister(sock)
+        sock.close()
+    except:
+        print("Error: service_game_begins func")
+        pass
 
 
 def create_ips_list(ip_format):
@@ -158,15 +129,12 @@ def send_udp_broadcast():
 
     while True:
         if time.time() > timeout:
-            # print("times up!!!  -->  server broadcasting stopped.")
             break
         server.sendto(message, (ips[ip_index], 13117))
-        # print("message sent to %s" % ips[ip_index])
         if ip_index < (len(ips)-1):
             ip_index += 1
         else:
             ip_index = 0
-
     server.close()
 
 
@@ -181,7 +149,20 @@ def finish_main_loop():
     group1 = []
     group2 = []
 
-    print("Game over, sending out offer requests...")
+
+
+
+def create_welcome_msg():
+    welcome_msg = "Welcome to Keyboard Spamming Battle Royal.\nGroup 1: \n==\n"
+    for t in group1:
+        welcome_msg += t + '\n'
+    welcome_msg += "Group 2: \n==\n"
+    for t in group2:
+        welcome_msg += t + '\n'
+    welcome_msg += "Start pressing keys on your keyboard as fast as you can!!\n"
+    print(welcome_msg)
+    welcome_msg = bytes(welcome_msg, 'utf-8')
+    return welcome_msg
 
 
 def main():
@@ -191,10 +172,12 @@ def main():
 
     main_loop = True
     while main_loop:
+        # Stage 1: UDP broadcast msgs to all clients
         broadcast_thread = threads.Thread(name="t1", target=send_udp_broadcast)
         broadcast_thread.setDaemon(True)  # runs in the background without worrying about shutting it down.
         broadcast_thread.start()
 
+        # Stage 1: open TCP socket and listening
         sel = selectors.DefaultSelector()
         HOST = '10.0.2.15'  # Standard loop back interface address (localhost)
         PORT = 13117  # Port to listen on (non-privileged ports are > 1023)
@@ -205,14 +188,13 @@ def main():
         lsock.setblocking(False)
         sel.register(lsock, selectors.EVENT_READ, data=None)
 
+        # Stage 2: open TCP connections with clients and divide to groups
         timeout = time.time() + 10  # 10 seconds from now
-
         while time.time() < timeout:
             events = sel.select(timeout=None)
             for key, mask in events:
                 if key.data is None:
                     accept_wrapper(sel, key.fileobj)
-                    my_client_list.append((key, mask))
                 else:
                     team_name = service_connection(sel, key, mask)
                     if len(team_name) > 1 and team_name not in group1 and team_name not in group2:
@@ -222,52 +204,52 @@ def main():
                             group1.append(team_name[2: len(team_name)-3])
 
         broadcast_thread.join()
-        # print("Welcome to Keyboard Spamming Battle Royal.")
-        # print("Group 1: \n==\n" + str(group1))
-        # print("Group 2: \n==\n" + str(group2))
-        # print("Start pressing keys on your keyboard as fast as you can!!")
-        welcome_msg = "Welcome to Keyboard Spamming Battle Royal.\nGroup 1: \n==\n"
-        for t in group1:
-            welcome_msg += t + '\n'
-        welcome_msg += "Group 2: \n==\n"
-        for t in group2:
-            welcome_msg += t + '\n'
-        welcome_msg += "Start pressing keys on your keyboard as fast as you can!!\n"
-        print(welcome_msg)
-        welcome_msg = bytes(welcome_msg, 'utf-8')
 
-        # welcome_msg = b'Welcome msg ~~'
-
+        # Stage 3: send Welcome msgs to all clients
+        welcome_msg = create_welcome_msg()
         events = sel.select(timeout=None)
         for key, mask in events:
             send_msg_to_clients(sel, key, mask, welcome_msg)
 
+        # Stage 4: listening to all clients who type on keyboard and counts
         timeout2 = time.time() + 10
         while time.time() < timeout2:
             events = sel.select(timeout=None)
             for key, mask in events:
                 service_game_begins(sel, key, mask)
 
+        # Stage 5: send Game-Over msgs to all clients
         events = sel.select(timeout=None)
         for key, mask in events:
-            send_msg_to_clients(sel, key, mask, b"byebye")
+            send_msg_to_clients(sel, key, mask, b"GAME-OVER!\n")
 
+        # Stage 6: print game summary
         print("Game over!\nGroup 1 typed in %d characters. Group 2 typed %d characters." % (score_group1, score_group2))
         if score_group1 > score_group2:
             print("Group 1 Wins!")
+            print("Congratulations to the winners:\n==")
+            for t in group1:
+                print(t + "\n")
         if score_group1 < score_group2:
             print("Group 2 Wins!")
+            print("Congratulations to the winners:\n==")
+            for t in group2:
+                print(t + "\n")
         else:
             print("Unbelievable! It's a tie!")
 
+        # Stage 7: unregister all clients
         events = sel.select(timeout=None)
         for key, mask in events:
             unregi_client(sel, key, mask)
+
+        # Stage 8: close socket and loop again
+        print("Game over, sending out offer requests...")
         finish_main_loop()
         lsock.close()
 
-        time.sleep(2)
-        print("\n\n---------------\n\n")
+        # time.sleep(2)
+        print("\n=================\n")
 
 
 if __name__ == "__main__":

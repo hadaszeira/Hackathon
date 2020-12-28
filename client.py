@@ -1,10 +1,8 @@
 import socket
 import struct
 import sys
-import time
 
 from pynput.keyboard import Key, Listener
-
 
 team_name = b'Marcelo\n'
 sock = None
@@ -65,10 +63,9 @@ def main(argv):
                 # listener.join()
                 data = sock.recv(1024)
                 listener.stop()
-                print(repr(data))
+                print("\n" + data.decode("utf-8"))
 
-            time.sleep(2)
-            print("\n\n---------------\n\n")
+            print("\n=================\n")
 
 
 if __name__ == "__main__":
