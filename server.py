@@ -14,8 +14,6 @@ score_group1 = 0
 score_group2 = 0
 
 
-
-
 def update_scores(data_outb, data_addr):
     global score_group1
     global score_group2

@@ -2,26 +2,25 @@ import socket
 import struct
 import sys
 
-from pynput.keyboard import Key, Listener
-
 from formats import PrintColors
+from formats import getchar
 
 team_name = b'Marcelo\n'
 sock = None
 
 
-def on_press(key):
-    print('{0} pressed'.format(key))
-    key_str = str(key)
-    key_byte = key_str.encode("utf-8")
-    sock.sendall(key_byte)
+# def on_press(key):
+#     print('{0} pressed'.format(key))
+#     key_str = str(key)
+#     key_byte = key_str.encode("utf-8")
+#     sock.sendall(key_byte)
 
 
-def on_release(key):
-    print('{0} release'.format(key))
-    if key == Key.esc:
-        # Stop listener
-        return False
+# def on_release(key):
+#     print('{0} release'.format(key))
+#     if key == Key.esc:
+#         # Stop listener
+#         return False
 
 
 def udp_recv_offer():
@@ -41,6 +40,18 @@ def udp_recv_offer():
     print(PrintColors.OKGREEN + "Received offer from %s, attempting to connect..." % addr[0])
     client.close()
     return addr, port
+
+
+def listen_to_keyPress():
+    while True:
+        ch = getchar()
+        key_str = str(ch)
+        key_byte = key_str.encode("utf-8")
+        try:
+            sock.sendall(key_byte)
+        except:
+            print("except: listen_to_keyPress")
+            pass
 
 
 def main(argv):
@@ -63,15 +74,22 @@ def main(argv):
             print(PrintColors.OKCYAN + welcome_msg)
 
             # Collect events until released
-            with Listener(on_press=on_press) as listener:
+            # with Listener(on_press=on_press) as listener:
                 # listener.join()
-                data = sock.recv(1024)
-                listener.stop()
-                print(PrintColors.purple + "\n\n" + data.decode("utf-8"))
+                # data = sock.recv(1024)
+                # listener.stop()
+
+            t_keyboard = threads.Thread(name="t_keyboard", target=listen_to_keyPress)
+            t_keyboard.start()
+            # broadcast_thread.setDaemon(True)  # runs in the background without worrying about shutting it down.
+            
+            data = sock.recv(1024)
+            t_keyboard.join()
+            print(PrintColors.purple + "\n\n" + data.decode("utf-8"))
 
             print(PrintColors.purple + "=================\n")
 
 
-if __name__ == "__main__":
-    main(sys.argv[1:])
 
+if _name_ == "_main_":
+    main(sys.argv[1:])

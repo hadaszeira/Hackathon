@@ -1,3 +1,7 @@
+import sys
+import termios
+import tty
+
 
 class PrintColors:
     HEADER = '\033[95m'
@@ -36,3 +40,18 @@ def bytes_to_msg(msg_in_bytes):
     port = msg_in_bytes[5:7]
     return magic_cookie.decode("utf-8"), type.decode("utf-8"), port.decode("utf-8")
 
+
+def getchar():
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    try:
+        tty.setraw(sys.stdin.fileno())
+        ch = sys.stdin.read(1)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    return ch
+
+
+# while 1:
+#     ch = getchar()
+#     print('You pressed', ch)
