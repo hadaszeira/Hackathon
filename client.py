@@ -1,12 +1,18 @@
 import socket
 import struct
 import sys
-
+import time
 from formats import PrintColors
 from formats import getchar
+from formats import PORT_BROAD
+import threading as threads
+import getch
+
+
 
 team_name = b'Marcelo\n'
 sock = None
+can_send = False
 
 
 # def on_press(key):
@@ -31,7 +37,7 @@ def udp_recv_offer():
     client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     print(PrintColors.OKGREEN + "Client started, listening for offer requests...")
 
-    client.bind(("", 13117))
+    client.bind(("", PORT_BROAD))
     data, addr = client.recvfrom(1024)  # buffer size is 1024 bytes
     if data[:4] != bytes([0xfe, 0xed, 0xbe, 0xef]) or data[4] != 0x02:
         print(PrintColors.RED + "illegal format")
@@ -43,19 +49,32 @@ def udp_recv_offer():
 
 
 def listen_to_keyPress():
-    while True:
-        ch = getchar()
-        key_str = str(ch)
-        key_byte = key_str.encode("utf-8")
+    global can_send
+    timeout = time.time() + 10
+    while 1:
+        # ch = getchar()
         try:
-            sock.sendall(key_byte)
+            if can_send:
+                # print("can send")
+                ch = getch.getch()
+                key_str = str(ch)
+                key_byte = key_str.encode("utf-8")
+                if can_send:
+                    sock.sendall(key_byte)
         except:
             print("except: listen_to_keyPress")
             pass
 
 
-def main(argv):
+def main():
+    global can_send
+
     main_loop = True
+
+    t_keyboard = threads.Thread(name="t_keyboard", target=listen_to_keyPress)
+    t_keyboard.setDaemon(True)  # runs in the background without worrying about shutting it down.
+    t_keyboard.start()
+
     while main_loop:
         addr_server, port_server = udp_recv_offer()
 
@@ -72,24 +91,25 @@ def main(argv):
             data = sock.recv(1024)
             welcome_msg = data.decode("utf-8")
             print(PrintColors.OKCYAN + welcome_msg)
-
+            can_send = True
             # Collect events until released
             # with Listener(on_press=on_press) as listener:
                 # listener.join()
                 # data = sock.recv(1024)
                 # listener.stop()
 
-            t_keyboard = threads.Thread(name="t_keyboard", target=listen_to_keyPress)
-            t_keyboard.start()
-            # broadcast_thread.setDaemon(True)  # runs in the background without worrying about shutting it down.
             
+            # listen_to_keyPress()
+            # print("megia")
             data = sock.recv(1024)
-            t_keyboard.join()
+            can_send = False
+            # can_send = True
+            # t_keyboard.join()
             print(PrintColors.purple + "\n\n" + data.decode("utf-8"))
 
             print(PrintColors.purple + "=================\n")
 
 
 
-if _name_ == "_main_":
-    main(sys.argv[1:])
+if __name__ == "__main__":
+    main()

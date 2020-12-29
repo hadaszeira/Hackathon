@@ -4,7 +4,8 @@ import struct
 import threading as threads
 import time
 import types
-import formats
+import formats 
+from formats import HOST, HOST_FORMAT, PORT_BROAD
 
 group1 = []
 group2 = []
@@ -12,6 +13,7 @@ group1_addrs = []
 group2_addrs = []
 score_group1 = 0
 score_group2 = 0
+my_client_list = []
 
 
 def update_scores(data_outb, data_addr):
@@ -19,7 +21,7 @@ def update_scores(data_outb, data_addr):
     global score_group2
 
     data = data_outb.decode("utf-8")
-    print(data)
+    # print(data)
     # team = data[2: len(data) - 3]
     # if team in group1:
     #     score_group1 += 1
@@ -110,11 +112,11 @@ def unregi_client(sel, key, mask):
         pass
 
 
-def create_ips_list(ip_format):
+def create_ips_list():
     ips = []
     i = 0
     while i < 256:
-        ip = ip_format + str(i)
+        ip = HOST_FORMAT + str(i)
         ips.append(ip)
         i += 1
     return ips
@@ -126,10 +128,9 @@ def send_udp_broadcast():
     # Enable broadcasting mode
     server.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
-    port_in_format = struct.pack('>H', 13117)  # port in 2 bytes
+    port_in_format = struct.pack('>H', PORT_BROAD)  # port in 2 bytes
     message = formats.BrodMSG(port_in_format).msg_to_bytes()
-    ip_format = "10.0.2."
-    ips = create_ips_list(ip_format)
+    ips = create_ips_list()
 
     timeout = time.time() + 10  # 10 seconds from now
     ip_index = 0
@@ -137,7 +138,7 @@ def send_udp_broadcast():
     while True:
         if time.time() > timeout:
             break
-        server.sendto(message, (ips[ip_index], 13117))
+        server.sendto(message, (ips[ip_index], PORT_BROAD))
         if ip_index < (len(ips)-1):
             ip_index += 1
         else:
@@ -150,11 +151,13 @@ def finish_main_loop():
     global score_group2
     global group1
     global group2
+    global my_client_list
 
     score_group1 = 0
     score_group2 = 0
     group1 = []
     group2 = []
+    my_client_list = []
 
 
 def create_welcome_msg():
@@ -176,12 +179,10 @@ def main():
 
     # Stage 1: open TCP socket and listening
     sel = selectors.DefaultSelector()
-    HOST = '10.0.2.15'  # Standard loop back interface address (localhost)
-    PORT = 13117  # Port to listen on (non-privileged ports are > 1023)
     lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    lsock.bind((HOST, PORT))
+    lsock.bind((HOST, PORT_BROAD))
     lsock.listen()
-    print(formats.PrintColors.OKGREEN + 'Server started, listening on IP address ', (HOST, PORT))
+    print(formats.PrintColors.OKGREEN + 'Server started, listening on IP address ', (HOST, PORT_BROAD))
     lsock.setblocking(False)
     sel.register(lsock, selectors.EVENT_READ, data=None)
 
@@ -202,6 +203,7 @@ def main():
                 else:
                     team_name, team_addr = service_connection(sel, key, mask)
                     if len(team_name) > 1 and team_name not in group1 and team_name not in group2:
+                        my_client_list.append((key, mask))
                         if len(group1) >= len(group2):
                             group2.append(team_name[2: len(team_name)-3])
                             group2_addrs.append(team_addr)
@@ -213,9 +215,11 @@ def main():
 
         # Stage 3: send Welcome msgs to all clients
         welcome_msg = create_welcome_msg()
-        events = sel.select(timeout=None)
-        for key, mask in events:
-            send_msg_to_clients(sel, key, mask, welcome_msg)
+        # events = sel.select(timeout=None)
+        # for key, mask in events:
+        # send_msg_to_clients(sel, key, mask, welcome_ms
+        for zog in my_client_list:
+            send_msg_to_clients(sel, zog[0], zog[1], welcome_msg)
 
         # Stage 4: listening to all clients who type on keyboard and counts
         timeout2 = time.time() + 10
@@ -225,9 +229,11 @@ def main():
                 service_game_begins(sel, key, mask)
 
         # Stage 5: send Game-Over msgs to all clients
-        events = sel.select(timeout=None)
-        for key, mask in events:
-            send_msg_to_clients(sel, key, mask, b"GAME-OVER!\n")
+        # events = sel.select(timeout=None)
+        # for key, mask in events:
+        #    send_msg_to_clients(sel, key, mask, b"GAME-OVER!\n")
+        for zog in my_client_list:
+            send_msg_to_clients(sel, zog[0], zog[1], b"GAME-OVER!\n")
 
         # Stage 6: print game summary
         print(formats.PrintColors.OKBLUE +
@@ -246,9 +252,11 @@ def main():
             print(formats.PrintColors.OKBLUE + "Unbelievable! It's a tie!")
 
         # Stage 7: unregister all clients
-        events = sel.select(timeout=None)
-        for key, mask in events:
-            unregi_client(sel, key, mask)
+        # events = sel.select(timeout=None)
+        # for key, mask in events:
+        #    unregi_client(sel, key, mask)
+        for zog in my_client_list:
+            unregi_client(sel, zog[0], zog[1])
 
         # Stage 8: close socket and loop again
         print(formats.PrintColors.purple + "Game over, sending out offer requests...")
