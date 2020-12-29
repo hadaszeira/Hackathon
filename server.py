@@ -8,22 +8,31 @@ import formats
 
 group1 = []
 group2 = []
+group1_addrs = []
+group2_addrs = []
 score_group1 = 0
 score_group2 = 0
 
 
-def update_scores(data_outb):
+
+
+def update_scores(data_outb, data_addr):
     global score_group1
     global score_group2
 
-    data = repr(data_outb)
-    team = data[2: len(data) - 3]
-    if team in group1:
+    data = data_outb.decode("utf-8")
+    print(data)
+    # team = data[2: len(data) - 3]
+    # if team in group1:
+    #     score_group1 += 1
+    # if team in group2:
+    #     score_group2 += 1
+    if data_addr in group1_addrs:
         score_group1 += 1
-    if team in group2:
+    elif data_addr in group2_addrs:
         score_group2 += 1
     else:
-        print("Error: update scores! ---> team:" + team)
+        print("Error: update scores! ---> addr:" + data_addr)
 
 
 def check_team_name(data_out):
@@ -58,7 +67,7 @@ def service_connection(sel, key, mask):
             except:
                 print("Error: service_connection func")
                 pass
-    return team_name
+    return team_name, data.addr
 
 
 def send_msg_to_clients(sel, key, mask, msg):
@@ -79,7 +88,7 @@ def service_game_begins(sel, key, mask):
     if mask & selectors.EVENT_READ:
         recv_data = sock.recv(1024)  # Should be ready to read
         if recv_data:
-            update_scores(recv_data)
+            update_scores(recv_data, data.addr)
         else:
             print('closing connection to', data.addr)
             try:
@@ -99,7 +108,7 @@ def unregi_client(sel, key, mask):
         sel.unregister(sock)
         sock.close()
     except:
-        print("Error: service_game_begins func")
+        print("Error: unregi_client func")
         pass
 
 
@@ -167,6 +176,17 @@ def main():
     global score_group1
     global score_group2
 
+    # Stage 1: open TCP socket and listening
+    sel = selectors.DefaultSelector()
+    HOST = '10.0.2.15'  # Standard loop back interface address (localhost)
+    PORT = 13117  # Port to listen on (non-privileged ports are > 1023)
+    lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    lsock.bind((HOST, PORT))
+    lsock.listen()
+    print(formats.PrintColors.OKGREEN + 'Server started, listening on IP address ', (HOST, PORT))
+    lsock.setblocking(False)
+    sel.register(lsock, selectors.EVENT_READ, data=None)
+
     main_loop = True
     while main_loop:
         # Stage 1: UDP broadcast msgs to all clients
@@ -174,31 +194,22 @@ def main():
         broadcast_thread.setDaemon(True)  # runs in the background without worrying about shutting it down.
         broadcast_thread.start()
 
-        # Stage 1: open TCP socket and listening
-        sel = selectors.DefaultSelector()
-        HOST = '10.0.2.15'  # Standard loop back interface address (localhost)
-        PORT = 13117  # Port to listen on (non-privileged ports are > 1023)
-        lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        lsock.bind((HOST, PORT))
-        lsock.listen()
-        print(formats.PrintColors.OKGREEN + 'Server started, listening on IP address ', (HOST, PORT))
-        lsock.setblocking(False)
-        sel.register(lsock, selectors.EVENT_READ, data=None)
-
         # Stage 2: open TCP connections with clients and divide to groups
         timeout = time.time() + 10  # 10 seconds from now
         while time.time() < timeout:
-            events = sel.select(timeout=None)
+            events = sel.select(timeout=timeout-time.time())
             for key, mask in events:
                 if key.data is None:
                     accept_wrapper(sel, key.fileobj)
                 else:
-                    team_name = service_connection(sel, key, mask)
+                    team_name, team_addr = service_connection(sel, key, mask)
                     if len(team_name) > 1 and team_name not in group1 and team_name not in group2:
                         if len(group1) >= len(group2):
                             group2.append(team_name[2: len(team_name)-3])
+                            group2_addrs.append(team_addr)
                         else:
                             group1.append(team_name[2: len(team_name)-3])
+                            group1_addrs.append(team_addr)
 
         broadcast_thread.join()
 
@@ -244,7 +255,7 @@ def main():
         # Stage 8: close socket and loop again
         print(formats.PrintColors.purple + "Game over, sending out offer requests...")
         finish_main_loop()
-        lsock.close()
+        # lsock.close()
 
         # time.sleep(2)
         print(formats.PrintColors.purple + "\n=================\n")

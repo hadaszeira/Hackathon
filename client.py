@@ -12,7 +12,9 @@ sock = None
 
 def on_press(key):
     print('{0} pressed'.format(key))
-    sock.sendall(team_name)
+    key_str = str(key)
+    key_byte = key_str.encode("utf-8")
+    sock.sendall(key_byte)
 
 
 def on_release(key):
@@ -32,7 +34,7 @@ def udp_recv_offer():
 
     client.bind(("", 13117))
     data, addr = client.recvfrom(1024)  # buffer size is 1024 bytes
-    if  data[:4] != bytes([0xfe, 0xed, 0xbe, 0xef]) or data[4] != 0x02:
+    if data[:4] != bytes([0xfe, 0xed, 0xbe, 0xef]) or data[4] != 0x02:
         print(PrintColors.RED + "illegal format")
         return addr, -1
     port = struct.unpack('>H', data[5:7])[0]
