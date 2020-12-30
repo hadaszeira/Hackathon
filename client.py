@@ -10,23 +10,9 @@ import getch
 
 
 
-team_name = b'Marcelo\n'
+team_name = b'Ohad_Golesh\n'
 sock = None
 can_send = False
-
-
-# def on_press(key):
-#     print('{0} pressed'.format(key))
-#     key_str = str(key)
-#     key_byte = key_str.encode("utf-8")
-#     sock.sendall(key_byte)
-
-
-# def on_release(key):
-#     print('{0} release'.format(key))
-#     if key == Key.esc:
-#         # Stop listener
-#         return False
 
 
 def udp_recv_offer():
@@ -52,11 +38,12 @@ def listen_to_keyPress():
     global can_send
     timeout = time.time() + 10
     while 1:
-        # ch = getchar()
         try:
             if can_send:
                 # print("can send")
                 ch = getch.getch()
+                if ord(ch) == 3 or ord(ch) == 4:
+                    break
                 key_str = str(ch)
                 key_byte = key_str.encode("utf-8")
                 if can_send:
@@ -68,9 +55,9 @@ def listen_to_keyPress():
 
 def main():
     global can_send
-
     main_loop = True
 
+    # start thread listening to key press
     t_keyboard = threads.Thread(name="t_keyboard", target=listen_to_keyPress)
     t_keyboard.setDaemon(True)  # runs in the background without worrying about shutting it down.
     t_keyboard.start()
@@ -92,19 +79,9 @@ def main():
             welcome_msg = data.decode("utf-8")
             print(PrintColors.OKCYAN + welcome_msg)
             can_send = True
-            # Collect events until released
-            # with Listener(on_press=on_press) as listener:
-                # listener.join()
-                # data = sock.recv(1024)
-                # listener.stop()
 
-            
-            # listen_to_keyPress()
-            # print("megia")
             data = sock.recv(1024)
             can_send = False
-            # can_send = True
-            # t_keyboard.join()
             print(PrintColors.purple + "\n\n" + data.decode("utf-8"))
 
             print(PrintColors.purple + "=================\n")

@@ -5,7 +5,8 @@ import threading as threads
 import time
 import types
 import formats 
-from formats import HOST, HOST_FORMAT, PORT_BROAD
+from formats import HOST, HOST_FORMAT, PORT_BROAD, PrintColors, Looser, happy
+
 
 group1 = []
 group2 = []
@@ -14,19 +15,24 @@ group2_addrs = []
 score_group1 = 0
 score_group2 = 0
 my_client_list = []
+keys_statistics = {}
+
+
+
+def update_key_statistics(key):
+    if key not in keys_statistics: 
+        keys_statistics[key] = 1
+    else:
+        keys_statistics[key] += 1
 
 
 def update_scores(data_outb, data_addr):
     global score_group1
     global score_group2
 
-    data = data_outb.decode("utf-8")
+    key = data_outb.decode("utf-8")
+    update_key_statistics(key)
     # print(data)
-    # team = data[2: len(data) - 3]
-    # if team in group1:
-    #     score_group1 += 1
-    # if team in group2:
-    #     score_group2 += 1
     if data_addr in group1_addrs:
         score_group1 += 1
     elif data_addr in group2_addrs:
@@ -173,6 +179,19 @@ def create_welcome_msg():
     return welcome_msg
 
 
+def print_statistics():
+    print(PrintColors.HEADER + "Statistics:\n")
+
+    best_key = ('', 0)
+    for key in keys_statistics.keys():
+        types = keys_statistics[key]
+        if types > best_key[1]:
+            best_key = (key, types) 
+
+    print(PrintColors.Yellow + "The letter that was pressed the most...:")
+    print(PrintColors.BOLD + PrintColors.Yellow + key)
+
+
 def main():
     global score_group1
     global score_group2
@@ -235,6 +254,8 @@ def main():
         for zog in my_client_list:
             send_msg_to_clients(sel, zog[0], zog[1], b"GAME-OVER!\n")
 
+        msg = "Game over!\nGroup 1 typed in " + str(score_group1) + " characters. Group 2 typed " + str(score_group2) + " characters."
+        print(msg)
         # Stage 6: print game summary
         print(formats.PrintColors.OKBLUE +
               "Game over!\nGroup 1 typed in %d characters. Group 2 typed %d characters." % (score_group1, score_group2))
@@ -262,9 +283,10 @@ def main():
         print(formats.PrintColors.purple + "Game over, sending out offer requests...")
         finish_main_loop()
         # lsock.close()
-
         # time.sleep(2)
         print(formats.PrintColors.purple + "\n=================\n")
+        print(Looser)
+        print_statistics()
 
 
 if __name__ == "__main__":
