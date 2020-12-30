@@ -62,9 +62,12 @@ def main():
     while main_loop:
         addr_server, port_server = udp_recv_offer()
 
-        HOST = addr_server[0]  # The server's hostname or IP address
+        # HOST = addr_server[0]  # The server's hostname or IP address
+        
+        HOST = "172.1.0.4"
         PORT = port_server
-
+        print(HOST)
+        print(PORT)
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             global sock
 

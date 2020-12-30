@@ -140,14 +140,20 @@ def send_udp_broadcast():
     timeout = time.time() + 10  # 10 seconds from now
     ip_index = 0
 
-    while True:
-        if time.time() > timeout:
-            break
-        server.sendto(message, (ips[ip_index], PORT_BROAD))
-        if ip_index < (len(ips)-1):
-            ip_index += 1
-        else:
-            ip_index = 0
+    while time.time() < timeout:
+        try:
+            server.sendto(message, ('<broadcast>', PORT_BROAD))
+        except:
+            print(PrintColors.RED + "Error: broadcast send")
+        time.sleep(1)    
+    # while True:
+    #     if time.time() > timeout:
+    #         break
+    #     server.sendto(message, (ips[ip_index], PORT_BROAD))
+    #     if ip_index < (len(ips)-1):
+    #         ip_index += 1
+    #     else:
+    #         ip_index = 0
     server.close()
 
 
