@@ -199,7 +199,8 @@ def create_game_over_msg():
             msg += t + "\n"
     else:
         msg += "Unbelievable! It's a tie!\n"
-    msg_client = msg + good_job + '\n'
+    msg_client = msg + '\n'
+    msg_client += go_get_your + '\n' + pizza + '\n'
     msg_server = msg
     return msg_server, msg_client
 
@@ -228,9 +229,9 @@ def print_statistics():
     print(PrintColors.HEADER + "'Q' is in the edge of the keyboard and was typed %d times" % q_types)
     print(PrintColors.HEADER + "Give everyone equal treatment next time...")
     print("\n=================\n")
-    print(go_get_your)
-    print(pizza)
-    print("\n=================\n")
+    # print(go_get_your)
+    # print(pizza)
+    # print("\n=================\n")
 
 
 def main():

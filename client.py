@@ -6,8 +6,7 @@ import threading as threads
 import getch
 
 
-
-team_name = b'Ohad_Golesh\n'
+team_name = b'How I Met Your Modem\n'
 sock = None
 can_send = False
 
@@ -87,14 +86,14 @@ def main():
                 # Stage 5: Game over, disconnected from curr server
                 print(PrintColors.OKBLUE + data.decode("utf-8"))
                 print(PrintColors.purple + "Server disconnected, listening for offer requests...")
-                print(PrintColors.purple + "=================\n")
-                print(go_get_your)
-                print(pizza)
+                # print(PrintColors.purple + "=================\n")
+                # print(go_get_your)
+                # print(pizza)
                 print(PrintColors.purple + "=================\n")
         except:
             print("error: client TCP")
             pass
 
-        
+
 if __name__ == "__main__":
     main()

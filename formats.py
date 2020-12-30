@@ -2,12 +2,12 @@ import sys
 import termios
 import tty
 
-# HOST = "10.0.2.15"
-# HOST_FORMAT = "10.0.2."
+HOST = "10.100.102.47"
+HOST_FORMAT = "10.100.102."
 # PORT_BROAD = 13117
-HOST = "172.1.0.4"
-HOST_FORMAT = "172.1.0."
-PORT_BROAD = 13118
+# HOST = "172.1.0.4"
+# HOST_FORMAT = "172.1.0."
+PORT_BROAD = 13117
 
 class PrintColors:
     HEADER = '\033[95m'
