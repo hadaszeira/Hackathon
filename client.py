@@ -64,32 +64,37 @@ def main():
 
         HOST = addr_server[0]  # The server's hostname or IP addres
         PORT = port_server
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            global sock
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                global sock
 
-            # Stage 2: connects in TCP to server and sends team name
-            sock = s
-            sock.connect((HOST, PORT))
-            sock.sendall(team_name)
-            print(PrintColors.OKGREEN + 'client connected successfully, GO TEAM!')
+                # Stage 2: connects in TCP to server and sends team name
+                sock = s
+                sock.connect((HOST, PORT))
+                sock.sendall(team_name)
+                print(PrintColors.OKGREEN + 'client connected successfully, GO TEAM!')
 
-            # Stage 3: Waiting for Welcome msg and print it
-            data = sock.recv(1024)
-            welcome_msg = data.decode("utf-8")
-            print(PrintColors.OKCYAN + welcome_msg)
+                # Stage 3: Waiting for Welcome msg and print it
+                data = sock.recv(1024)
+                welcome_msg = data.decode("utf-8")
+                print(PrintColors.OKCYAN + welcome_msg)
 
-            # Stage 4: Listening to keyboard press and send to server
-            can_send = True
-            data = sock.recv(1024)
-            can_send = False
+                # Stage 4: Listening to keyboard press and send to server
+                can_send = True
+                data = sock.recv(1024)
+                can_send = False
 
-            # Stage 5: Game over, disconnected from curr server
-            print(PrintColors.OKBLUE + data.decode("utf-8"))
-            print(PrintColors.purple + "Server disconnected, listening for offer requests...")
-            print(PrintColors.purple + "=================\n")
-            print(go_get_your)
-            print(pizza)
-            print(PrintColors.purple + "=================\n")
+                # Stage 5: Game over, disconnected from curr server
+                print(PrintColors.OKBLUE + data.decode("utf-8"))
+                print(PrintColors.purple + "Server disconnected, listening for offer requests...")
+                print(PrintColors.purple + "=================\n")
+                print(go_get_your)
+                print(pizza)
+                print(PrintColors.purple + "=================\n")
+        except:
+            print("error: client TCP")
+            pass
 
+        
 if __name__ == "__main__":
     main()
