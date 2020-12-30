@@ -5,7 +5,7 @@ import threading as threads
 import time
 import types
 import formats 
-from formats import HOST, HOST_FORMAT, PORT_BROAD, PrintColors, Looser, happy
+from formats import HOST, HOST_FORMAT, PORT_BROAD, PrintColors, good_job, go_type, go_get_your, pizza
 
 
 group1 = []
@@ -16,7 +16,6 @@ score_group1 = 0
 score_group2 = 0
 my_client_list = []
 keys_statistics = {}
-
 
 
 def update_key_statistics(key):
@@ -170,13 +169,33 @@ def create_welcome_msg():
     welcome_msg = "\nWelcome to Keyboard Spamming Battle Royal.\nGroup 1: \n==\n"
     for t in group1:
         welcome_msg += t + '\n'
-    welcome_msg += "Group 2: \n==\n"
+    welcome_msg += "\nGroup 2: \n==\n"
     for t in group2:
         welcome_msg += t + '\n'
-    welcome_msg += "Start pressing keys on your keyboard as fast as you can!!\n"
-    print(formats.PrintColors.OKCYAN + welcome_msg)
-    welcome_msg = bytes(welcome_msg, 'utf-8')
-    return welcome_msg
+    welcome_msg += "\nStart pressing keys on your keyboard as fast as you can!!\n"
+    welcome_msg_server = welcome_msg
+    welcome_msg_client = welcome_msg + go_type + '\n'
+    return welcome_msg_server, welcome_msg_client
+
+
+def create_game_over_msg():
+    global score_group1, score_group2, group1, group2
+
+    msg = "Game over!\nGroup 1 typed in " + str(score_group1) + " characters. "
+    msg += "Group 2 typed " + str(score_group2) + " characters.\n"
+    if score_group1 > score_group2:
+        msg += "Group 1 Wins!\nCongratulations to the winners:\n==\n"
+        for t in group1:
+            msg += t + "\n"
+    elif score_group1 < score_group2:
+        msg += "Group 2 Wins!\nCongratulations to the winners:\n==\n"
+        for t in group2:
+            msg += t + "\n"
+    else:
+        msg += "Unbelievable! It's a tie!\n"
+    msg_client = msg + good_job + '\n'
+    msg_server = msg
+    return msg_server, msg_client
 
 
 def print_statistics():
@@ -188,8 +207,24 @@ def print_statistics():
         if types > best_key[1]:
             best_key = (key, types) 
 
-    print(PrintColors.Yellow + "The letter that was pressed the most...:")
-    print(PrintColors.BOLD + PrintColors.Yellow + key)
+    print(PrintColors.HEADER + "-- FUN FACT #1 --")
+    print(PrintColors.HEADER + "The letter that was pressed the most: -- "
+          + str(best_key[0]).upper() + " -- (" + str(best_key[1]) + " types!!!)")
+
+    print(PrintColors.HEADER + "\n-- FUN FACT #2 --")
+    h_types = 0
+    q_types = 0
+    if 'h' in keys_statistics.keys():
+        h_types = keys_statistics['h']
+    if 'q' in keys_statistics.keys():
+        q_types = keys_statistics['q']
+    print(PrintColors.HEADER + "'H' is in the middle of the keyboard and was typed %d times" % h_types)
+    print(PrintColors.HEADER + "'Q' is in the edge of the keyboard and was typed %d times" % q_types)
+    print(PrintColors.HEADER + "Give everyone equal treatment next time...")
+    print("\n=================\n")
+    print(go_get_your)
+    print(pizza)
+    print("\n=================\n")
 
 
 def main():
@@ -201,7 +236,7 @@ def main():
     lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     lsock.bind((HOST, PORT_BROAD))
     lsock.listen()
-    print(formats.PrintColors.OKGREEN + 'Server started, listening on IP address ', (HOST, PORT_BROAD))
+    print(formats.PrintColors.OKGREEN + 'Server started, listening on IP address', HOST)
     lsock.setblocking(False)
     sel.register(lsock, selectors.EVENT_READ, data=None)
 
@@ -233,59 +268,36 @@ def main():
         broadcast_thread.join()
 
         # Stage 3: send Welcome msgs to all clients
-        welcome_msg = create_welcome_msg()
-        # events = sel.select(timeout=None)
-        # for key, mask in events:
-        # send_msg_to_clients(sel, key, mask, welcome_ms
+        welcome_msg_server, welcome_msg_client = create_welcome_msg()
         for zog in my_client_list:
-            send_msg_to_clients(sel, zog[0], zog[1], welcome_msg)
+            send_msg_to_clients(sel, zog[0], zog[1], welcome_msg_client.encode("utf-8"))
+        print(formats.PrintColors.OKCYAN + welcome_msg_server)
 
         # Stage 4: listening to all clients who type on keyboard and counts
         timeout2 = time.time() + 10
         while time.time() < timeout2:
-            events = sel.select(timeout=None)
+            events = sel.select(timeout=timeout-time.time())
             for key, mask in events:
                 service_game_begins(sel, key, mask)
 
         # Stage 5: send Game-Over msgs to all clients
-        # events = sel.select(timeout=None)
-        # for key, mask in events:
-        #    send_msg_to_clients(sel, key, mask, b"GAME-OVER!\n")
+        game_over_msg_server, game_over_msg_client = create_game_over_msg()
         for zog in my_client_list:
-            send_msg_to_clients(sel, zog[0], zog[1], b"GAME-OVER!\n")
+            send_msg_to_clients(sel, zog[0], zog[1], game_over_msg_client.encode("utf-8"))
 
-        msg = "Game over!\nGroup 1 typed in " + str(score_group1) + " characters. Group 2 typed " + str(score_group2) + " characters."
-        print(msg)
         # Stage 6: print game summary
-        print(formats.PrintColors.OKBLUE +
-              "Game over!\nGroup 1 typed in %d characters. Group 2 typed %d characters." % (score_group1, score_group2))
-        if score_group1 > score_group2:
-            print(formats.PrintColors.OKBLUE + formats.PrintColors.BOLD + "Group 1 Wins!")
-            print(formats.PrintColors.OKBLUE + "Congratulations to the winners:\n==")
-            for t in group1:
-                print(formats.PrintColors.OKBLUE + t + "\n")
-        if score_group1 < score_group2:
-            print(formats.PrintColors.OKBLUE + formats.PrintColors.BOLD + "Group 2 Wins!")
-            print(formats.PrintColors.OKBLUE + "Congratulations to the winners:\n==")
-            for t in group2:
-                print(formats.PrintColors.OKBLUE + t + "\n")
-        else:
-            print(formats.PrintColors.OKBLUE + "Unbelievable! It's a tie!")
+        print(PrintColors.OKBLUE + game_over_msg_server)
 
         # Stage 7: unregister all clients
-        # events = sel.select(timeout=None)
-        # for key, mask in events:
-        #    unregi_client(sel, key, mask)
         for zog in my_client_list:
             unregi_client(sel, zog[0], zog[1])
 
         # Stage 8: close socket and loop again
-        print(formats.PrintColors.purple + "Game over, sending out offer requests...")
+        print(formats.PrintColors.purple + "GAME-OVER, sending out offer requests...")
         finish_main_loop()
         # lsock.close()
         # time.sleep(2)
         print(formats.PrintColors.purple + "\n=================\n")
-        print(Looser)
         print_statistics()
 
 

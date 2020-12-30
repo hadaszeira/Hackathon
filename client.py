@@ -1,10 +1,7 @@
 import socket
 import struct
-import sys
 import time
-from formats import PrintColors
-from formats import getchar
-from formats import PORT_BROAD
+from formats import PrintColors, PORT_BROAD, go_get_your, pizza
 import threading as threads
 import getch
 
@@ -34,7 +31,7 @@ def udp_recv_offer():
     return addr, port
 
 
-def listen_to_keyPress():
+def listen_to_key_press():
     global can_send
     timeout = time.time() + 10
     while 1:
@@ -58,7 +55,7 @@ def main():
     main_loop = True
 
     # start thread listening to key press
-    t_keyboard = threads.Thread(name="t_keyboard", target=listen_to_keyPress)
+    t_keyboard = threads.Thread(name="t_keyboard", target=listen_to_key_press)
     t_keyboard.setDaemon(True)  # runs in the background without worrying about shutting it down.
     t_keyboard.start()
 
@@ -70,23 +67,30 @@ def main():
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             global sock
+
+            # Stage 2: connects in TCP to server and sends team name
             sock = s
             sock.connect((HOST, PORT))
             sock.sendall(team_name)
-            # data = sock.recv(1024)
-            print(PrintColors.OKGREEN + 'client connected successfully, GO TEAM Marcelo!')
+            print(PrintColors.OKGREEN + 'client connected successfully, GO TEAM!')
+
+            # Stage 3: Waiting for Welcome msg and print it
             data = sock.recv(1024)
             welcome_msg = data.decode("utf-8")
             print(PrintColors.OKCYAN + welcome_msg)
-            can_send = True
 
+            # Stage 4: Listening to keyboard press and send to server
+            can_send = True
             data = sock.recv(1024)
             can_send = False
-            print(PrintColors.purple + "\n\n" + data.decode("utf-8"))
 
+            # Stage 5: Game over, disconnected from curr server
+            print(PrintColors.OKBLUE + data.decode("utf-8"))
+            print(PrintColors.purple + "Server disconnected, listening for offer requests...")
             print(PrintColors.purple + "=================\n")
-
-
+            print(go_get_your)
+            print(pizza)
+            print(PrintColors.purple + "=================\n")
 
 if __name__ == "__main__":
     main()
