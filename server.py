@@ -5,7 +5,7 @@ import threading as threads
 import time
 import types
 import formats 
-from formats import HOST, HOST_FORMAT, PORT_BROAD, PrintColors, good_job, go_type, go_get_your, pizza
+from formats import HOST, PORT_BROAD, PrintColors, go_type, go_get_your, pizza
 
 
 group1 = []
@@ -117,17 +117,18 @@ def unregi_client(sel, key, mask):
         pass
 
 
-def create_ips_list():
-    ips = []
-    i = 0
-    while i < 256:
-        ip = HOST_FORMAT + str(i)
-        ips.append(ip)
-        i += 1
-    return ips
+# def create_ips_list():
+#    ips = []
+#    i = 0
+#    while i < 256:
+#        ip = HOST_FORMAT + str(i)
+#        ips.append(ip)
+#        i += 1
+#    return ips
 
 
 def send_udp_broadcast():
+    print(HOST)
     server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
     # Enable broadcasting mode
@@ -135,10 +136,10 @@ def send_udp_broadcast():
 
     port_in_format = struct.pack('>H', PORT_BROAD)  # port in 2 bytes
     message = formats.BrodMSG(port_in_format).msg_to_bytes()
-    ips = create_ips_list()
+    # ips = create_ips_list()
 
     timeout = time.time() + 10  # 10 seconds from now
-    ip_index = 0
+    # ip_index = 0
 
     while time.time() < timeout:
         try:

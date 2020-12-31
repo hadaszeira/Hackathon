@@ -1,9 +1,10 @@
 import sys
 import termios
 import tty
+import socket
 
-HOST = "10.100.102.47"
-HOST_FORMAT = "10.100.102."
+HOST = socket.gethostbyname(socket.gethostname())
+# HOST_FORMAT = "10.100.102."
 # PORT_BROAD = 13117
 # HOST = "172.1.0.4"
 # HOST_FORMAT = "172.1.0."
