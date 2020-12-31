@@ -10,6 +10,7 @@ HOST = socket.gethostbyname(socket.gethostname())
 # HOST_FORMAT = "172.1.0."
 PORT_BROAD = 13117
 
+
 class PrintColors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'

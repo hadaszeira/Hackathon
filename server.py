@@ -128,7 +128,6 @@ def unregi_client(sel, key, mask):
 
 
 def send_udp_broadcast():
-    print(HOST)
     server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
     # Enable broadcasting mode
